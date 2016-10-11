@@ -98,7 +98,6 @@ start_kibana_front_ends() {
 }
 
 start_logstash_instances() {
-  #consul_bootstrap='10.153.13.35'
   echo
   echo
   logstash_instances_total=$(ssh $consul_bootstrap find /pai-logs -type d -mindepth 1 -maxdepth 1 | wc -l)
@@ -113,7 +112,6 @@ start_logstash_instances() {
       echo $0: spinning up logstash instance on $host
       ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-logstash.sh"
       logstash_instances=$(expr $logstash_instances + 1)
-      #echo $0: logstash_instances: $logstash_instances
       echo
       echo
       echo $0: live logstash instances:
