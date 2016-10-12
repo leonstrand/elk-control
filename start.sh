@@ -3,9 +3,9 @@
 # leonstrand@gmail.com
 
 
-#10.153.13.36
 hosts='
 10.153.13.35
+10.153.13.36
 '
 directory=~/elk
 elasticsearch_nodes_per_host=5
@@ -33,8 +33,10 @@ start_consul_agents() {
       echo $0: waiting for response from bootstrap consul agent at $consul_bootstrap:8500
       echo curl --connect-timeout 1 $consul_bootstrap:8500
       until curl --connect-timeout 1 $consul_bootstrap:8500 1>/dev/null 2>&1; do
+        echo -n .
         sleep 0.1
       done
+      echo
       curl --connect-timeout 1 $consul_bootstrap:8500
       echo
       ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh $consul_bootstrap"
@@ -44,8 +46,11 @@ start_consul_agents() {
     echo $0: waiting for consul agent to finish starting
     echo ssh $host docker logs consul-1 \| grep \""\[INFO\] agent: Synced service 'consul'"\"
     until ssh $host docker logs consul-1 | grep "\[INFO\] agent: Synced service 'consul'"; do
+      echo -n .
       sleep 0.1
     done
+    echo
+    ssh $host docker logs consul-1 | grep "\[INFO\] agent: Synced service 'consul'"
   done
 }
 
@@ -61,17 +66,19 @@ start_elasticsearch_cluster() {
       echo
       echo
       echo $0: waiting for elasticsearch node to start
+      echo ssh $host docker logs \$\(ssh $host docker ps -lqf label=elasticsearch\) \| grep started
       until ssh $host docker logs $(ssh $host docker ps -lqf label=elasticsearch) | grep started; do
-        echo ssh $host docker logs \$\(ssh $host docker ps -lqf label=elasticsearch\) \| grep started
-        sleep 1
+        echo -n .
+        sleep 0.1
       done
+      echo
+      ssh $host docker logs $(ssh $host docker ps -lqf label=elasticsearch) | grep started
       echo $0: waiting for all elasticsearch nodes to pass
       until [ $(curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n | wc -w) -eq $nodes_up ]; do 
-        echo curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing \| jq -jr \''.[] | .Service | .Address + ":" + "\(.Port)" + ","'\' \| sed \''s/,$//'\' \| tr , \\\\n
-        curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n
-        echo
-        sleep 1
+        echo -n .
+        sleep 0.1
       done
+      echo
       echo curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing \| jq -jr \''.[] | .Service | .Address + ":" + "\(.Port)" + ","'\' \| sed \''s/,$//'\' \| tr , \\\\n
       curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n
       echo
@@ -120,11 +127,12 @@ start_logstash_instances() {
       echo -n $0: actual live logstash instance count:\ 
       curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
       echo $0: waiting for actual to equal expected
-      echo $0: checking actual with:
       echo curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing \| jq \''.[] | .Service | .ID'\' \| wc -w
       until [ $(curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w) -eq $logstash_instances ]; do
-        sleep 1
+        echo -n .
+        sleep 0.1
       done
+      echo
       echo -n $0: actual live logstash instance count:\ 
       curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
     done
