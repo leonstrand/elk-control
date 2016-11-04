@@ -12,11 +12,20 @@ elasticsearch_nodes_per_host=5
 
 
 stop_and_remove_all_containers() {
+  work() {
+    __host=$1
+    echo ssh $__host \'docker stop $\(docker ps -aq\) \&\& docker rm $\(docker ps -aq\)\'
+    ssh $__host 'docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'
+  }
+  for host in $hosts; do
+    work $host &
+  done
+  wait
   for host in $hosts; do
     echo
     echo
-    echo $0: host: $host
-    ssh $host '. ~/bashrc/docker && dsr all'
+    echo ssh $host docker ps -a
+    ssh $host docker ps -a
   done
 }
 
