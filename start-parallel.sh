@@ -10,6 +10,8 @@ hosts='
 directory=~/elk
 elasticsearch_nodes_per_host=5
 logstash_directory_logs=/pai-logs
+loop_threshold=300
+loop_threshold_logstash=$loop_threshold
 
 
 stop_and_remove_all_containers() {
@@ -140,11 +142,19 @@ start_logstash_instances() {
   echo $0: logstash_instances_total: $logstash_instances_total
   logstash_instances=0
   echo $0: waiting for actual live logstash instance count to equal expected
+  loop_count=0
   until [ $logstash_instances -eq $logstash_instances_total ]; do
     echo -en $0: logstash instances: expected: $logstash_instances_total, actual:\\t
     curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
-    sleep 1
-    logstash_instances=$(curl -sS http://$host:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w)
+    loop_count=$(expr $loop_count + 1)
+    echo $0: loop count: $loop_count, loop threshold logstash: $loop_threshold_logstash
+    if [ $loop_count -ge $loop_threshold_logstash ]; then
+      echo $0: fatal: loop count $loop_count exceeded threshold $loop_threshold_logstash, exiting...
+      break
+    else
+      sleep 1
+      logstash_instances=$(curl -sS http://$host:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w)
+    fi
   done
   echo -en $0: logstash instances: expected: $logstash_instances_total, actual:\\t
   curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
