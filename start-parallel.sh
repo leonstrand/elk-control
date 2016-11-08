@@ -37,11 +37,13 @@ start_consul_agents() {
   for host in $hosts; do
     echo
     echo
+    echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: host: $host
     if [ -z "$consul_bootstrap" ]; then
       ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh b"
       consul_bootstrap=$host
     else
+      echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: waiting for response from bootstrap consul agent at $consul_bootstrap:8500
       echo curl --connect-timeout 1 $consul_bootstrap:8500
       until curl --connect-timeout 1 $consul_bootstrap:8500 1>/dev/null 2>&1; do
@@ -55,6 +57,7 @@ start_consul_agents() {
     fi
     echo
     echo
+    echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: waiting for consul agent to finish starting
     echo ssh $host docker logs consul-1 \| grep \""\[INFO\] agent: Synced service 'consul'"\"
     until ssh $host docker logs consul-1 | grep "\[INFO\] agent: Synced service 'consul'"; do
@@ -72,11 +75,13 @@ start_elasticsearch_cluster() {
     for host in $hosts; do
       echo
       echo
+      echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: spinning up elasticsearch node on $host
       ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-elasticsearch.sh"
       nodes_up=$(expr $nodes_up + 1)
       echo
       echo
+      echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: waiting for elasticsearch node to start
       echo ssh $host docker logs \$\(ssh $host docker ps -lqf label=elasticsearch\) \| grep started
       until ssh $host docker logs $(ssh $host docker ps -lqf label=elasticsearch) | grep started; do
@@ -85,6 +90,7 @@ start_elasticsearch_cluster() {
       done
       echo
       ssh $host docker logs $(ssh $host docker ps -lqf label=elasticsearch) | grep started
+      echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: waiting for all elasticsearch nodes to pass
       until [ $(curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n | wc -w) -eq $nodes_up ]; do 
         echo -n .
@@ -102,10 +108,12 @@ start_kibana_front_ends() {
   for host in $hosts; do
     echo
     echo
+    echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: spinning up kibana front end on $host
     ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-kibana.sh"
     echo
     echo
+    echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: waiting for kibana to finish starting
     echo ssh $host docker logs kibana-1 \| grep \''Server running'\'
     until ssh $host docker logs kibana-1 | grep 'Server running'; do
@@ -124,6 +132,7 @@ start_logstash_instances() {
   container_name_prefix='logstash'
   container_sequence=0
   rest() { shift; echo $*; }
+  echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
   echo $0: spinning up logstash instances
   while [ -n "$servers" ]; do
     container_sequence=$(expr $container_sequence + 1)
@@ -131,6 +140,7 @@ start_logstash_instances() {
     for host in $hosts; do
       server=$(echo $servers | awk '{print $1}')
       if [ -n "$server" ]; then
+        echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
         echo $0: debug: command: ssh $host \""PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-logstash-parallel.sh $container_name $server"\"
         ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-logstash-parallel.sh $container_name $server"
         servers=$(rest $servers)
@@ -139,8 +149,10 @@ start_logstash_instances() {
   done
   host=$(echo $hosts | awk '{print $1}')
   logstash_instances_total=$(ssh $host find /pai-logs -type d -mindepth 1 -maxdepth 1 | wc -l)
+  echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
   echo $0: logstash_instances_total: $logstash_instances_total
   logstash_instances=0
+  echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
   echo $0: waiting for actual live logstash instance count to equal expected
   loop_count=0
   until [ $logstash_instances -eq $logstash_instances_total ]; do
@@ -150,6 +162,7 @@ start_logstash_instances() {
     loop_count=$(expr $loop_count + 1)
     echo -e loop count: $loop_count,\\tloop threshold logstash: $loop_threshold_logstash
     if [ $loop_count -ge $loop_threshold_logstash ]; then
+      echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: fatal: loop count $loop_count exceeded threshold $loop_threshold_logstash, exiting...
       break
     else
@@ -168,6 +181,7 @@ start_kibana_front_ends
 start_logstash_instances
 echo
 echo
+echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
 echo $0: elk cluster startup complete
 echo
 echo
