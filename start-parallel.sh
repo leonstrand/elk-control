@@ -145,9 +145,10 @@ start_logstash_instances() {
   loop_count=0
   until [ $logstash_instances -eq $logstash_instances_total ]; do
     echo -en $0: logstash instances: expected: $logstash_instances_total, actual:\\t
-    curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
+    logstash_instances_actual="$(curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w)"
+    echo -en $logstash_instances_actual\\t
     loop_count=$(expr $loop_count + 1)
-    echo $0: loop count: $loop_count, loop threshold logstash: $loop_threshold_logstash
+    echo -e loop count: $loop_count,\\tloop threshold logstash: $loop_threshold_logstash
     if [ $loop_count -ge $loop_threshold_logstash ]; then
       echo $0: fatal: loop count $loop_count exceeded threshold $loop_threshold_logstash, exiting...
       break
