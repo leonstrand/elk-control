@@ -3,9 +3,13 @@
 # leon.strand@gmail.com
 
 
-#date=$1
-#index='logstash-2016.11.06'
-index='twitter'
+index=$1
+if [ -z "$index" ]; then
+  echo $0: fatal: must provide index
+  echo $0: usage: $0 \<index\>
+  echo $0: example: $0 logstash-2016.11.06
+  exit 1
+fi
 
 consul_agents='
 10.153.13.35
@@ -56,7 +60,13 @@ data='
 }
 '
 }
-post_to_new_index
+case "$index" in
+  twitter)
+    echo
+    echo $0: info: twitter index specified, creating...
+    post_to_new_index
+  ;;
+esac
 
 echo curl -sS http://$host:$port/twitter/tweet/1?wait_for_completion=true -XPUT -d \'"$data"\' \| jq
 curl -sS http://$host:$port/twitter/tweet/1?wait_for_completion=true -XPUT -d "$data" | jq
