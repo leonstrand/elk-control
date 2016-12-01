@@ -45,7 +45,6 @@ if ! nc -w1 $host $port </dev/null; then
 fi
 
 
-
 post_to_new_index() {
 echo
 echo $0: info: action 0 of 4: post to new index
