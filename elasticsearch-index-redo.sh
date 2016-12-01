@@ -3,7 +3,7 @@
 # leon.strand@gmail.com
 
 
-index=$1
+index="$1"
 if [ -z "$index" ]; then
   echo $0: fatal: must provide index
   echo $0: usage: $0 \<index\>
