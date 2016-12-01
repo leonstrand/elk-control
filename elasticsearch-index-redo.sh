@@ -65,7 +65,7 @@ echo
 echo $0: info: report 1 of 7: indices overview
 echo curl -sS http://$host:$port/_cat/indices?v \| '(read -r; printf "%s\n" "$REPLY"; sort)'
 curl -sS http://$host:$port/_cat/indices?v | (read -r; printf "%s\n" "$REPLY"; sort)
-sleep 1
+sleep 5
 
 echo
 echo $0: info: report 2 of 7: index settings
@@ -91,7 +91,7 @@ echo
 echo $0: info: report 3 of 7: indices overview
 echo curl -sS http://$host:$port/_cat/indices?v \| '(read -r; printf "%s\n" "$REPLY"; sort)'
 curl -sS http://$host:$port/_cat/indices?v | (read -r; printf "%s\n" "$REPLY"; sort)
-sleep 1
+sleep 5
 
 echo
 echo $0: info: action 2 of 4: delete old index
@@ -102,7 +102,7 @@ echo
 echo $0: info: report 4 of 7: indices overview
 echo curl -sS http://$host:$port/_cat/indices?v \| '(read -r; printf "%s\n" "$REPLY"; sort)'
 curl -sS http://$host:$port/_cat/indices?v | (read -r; printf "%s\n" "$REPLY"; sort)
-sleep 1
+sleep 5
 
 echo
 echo $0: info: action 3 of 4: make new index from temporary index
@@ -123,7 +123,7 @@ echo
 echo $0: info: report 5 of 7: indices overview
 echo curl -sS http://$host:$port/_cat/indices?v \| '(read -r; printf "%s\n" "$REPLY"; sort)'
 curl -sS http://$host:$port/_cat/indices?v | (read -r; printf "%s\n" "$REPLY"; sort)
-sleep 1
+sleep 5
 
 echo
 echo $0: info: action 4 of 4: delete temporary index
