@@ -3,11 +3,47 @@
 # leon.strand@gmail.com
 
 
-host='10.153.13.35'
-port='19206'
 #date=$1
 #index='logstash-2016.11.06'
 index='twitter'
+
+consul_agents='
+10.153.13.35
+10.153.13.36
+'
+consul_agent_port=8500
+
+
+# check for consul agent, elasticsearch ip address and port, and successful connection to elasticsearch before proceeding
+for consul_agent in $consul_agents; do
+  echo
+  if nc -w1 $consul_agent $consul_agent_port </dev/null 2>&1 >/dev/null; then
+    break
+  fi
+done
+if [ -z "$consul_agent" ]; then
+  echo $0: fatal: could not find a live consul agent with:
+  echo nc -w1 $consul_agent $consul_agent_port \</dev/null 2\&1 \/dev/null
+  exit 1
+fi
+echo $0: info: consul agent: $consul_agent
+host=$(curl -sS $consul_agent:$consul_agent_port/v1/health/service/elasticsearch-http?passing | jq -jr '.[0] | .Service | "\(.Address)"')
+if [ -z "$host" ]; then
+  echo $0: fatal: could not find a live elasticsearch node with:
+  echo curl -sS $consul_agent:$consul_agent_port/v1/health/service/elasticsearch-http?passing \| jq -jr \''.[0] | .Service | "\(.Address)"'\'
+  exit 1
+fi
+port=$(curl -sS $consul_agent:$consul_agent_port/v1/health/service/elasticsearch-http?passing | jq -jr '.[0] | .Service | "\(.Port)"')
+if [ -z "$port" ]; then
+  echo $0: fatal: could not find port associated with a live elasticsearch node with:
+  echo curl -sS $consul_agent:$consul_agent_port/v1/health/service/elasticsearch-http?passing \| jq -jr \''.[0] | .Service | "\(.Port)"'\'
+  exit 1
+fi
+if ! nc -w1 $host $port </dev/null; then
+  echo $0: fatal: could not connect to elasticsearch at $host:$port
+  exit 1
+fi
+
 
 
 post_to_new_index() {
