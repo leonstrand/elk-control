@@ -60,11 +60,21 @@ data='
 }
 '
 }
+echo
 case "$index" in
   twitter)
-    echo
     echo $0: info: twitter index specified, creating...
     post_to_new_index
+  ;;
+  *)
+    echo $0: info: checking for index with:
+    echo curl -v -XHEAD http://$host:$port/$index 2\>\&1 \| grep \''200 OK'\'
+    if curl -v -XHEAD http://$host:$port/$index 2>&1 | grep '200 OK'; then
+      echo $0: info: index $index found
+    else
+      echo $0: fatal: index $index not found
+      exit 1
+    fi
   ;;
 esac
 
