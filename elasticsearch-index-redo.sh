@@ -50,7 +50,6 @@ fi
 
 
 post_to_new_index() {
-echo
 echo $0: info: action 0 of 4: post to new index
 data='
 {
@@ -59,6 +58,8 @@ data='
   "message" : "trying out Elasticsearch"
 }
 '
+echo curl -sS http://$host:$port/twitter/tweet/1?wait_for_completion=true -XPUT -d \'"$data"\' \| jq
+curl -sS http://$host:$port/twitter/tweet/1?wait_for_completion=true -XPUT -d "$data" | jq
 }
 echo
 case "$index" in
@@ -78,8 +79,6 @@ case "$index" in
   ;;
 esac
 
-echo curl -sS http://$host:$port/twitter/tweet/1?wait_for_completion=true -XPUT -d \'"$data"\' \| jq
-curl -sS http://$host:$port/twitter/tweet/1?wait_for_completion=true -XPUT -d "$data" | jq
 
 echo
 echo $0: info: report 1 of 7: indices overview
