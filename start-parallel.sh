@@ -11,6 +11,7 @@ directory=~/elk
 elasticsearch_nodes_per_host=5
 logstash_directory_logs=/pai-logs
 logstash_container_name_prefix='logstash-pai'
+consul_logstash_service_name=$logstash_container_name_prefix
 loop_threshold=300
 loop_threshold_logstash=$loop_threshold
 
@@ -157,7 +158,7 @@ start_logstash_instances() {
   loop_count=0
   until [ $logstash_instances -eq $logstash_instances_total ]; do
     echo -en $0: logstash instances: expected: $logstash_instances_total, actual:\\t
-    logstash_instances_actual="$(curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w)"
+    logstash_instances_actual="$(curl -sS http://$consul_bootstrap:8500/v1/health/service/$consul_logstash_service_name?passing | jq '.[] | .Service | .ID' | wc -w)"
     echo -en $logstash_instances_actual\\t
     loop_count=$(expr $loop_count + 1)
     echo -e loop count: $loop_count,\\tloop threshold logstash: $loop_threshold_logstash
@@ -167,11 +168,11 @@ start_logstash_instances() {
       break
     else
       sleep 1
-      logstash_instances=$(curl -sS http://$host:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w)
+      logstash_instances=$(curl -sS http://$host:8500/v1/health/service/$consul_logstash_service_name?passing | jq '.[] | .Service | .ID' | wc -w)
     fi
   done
   echo -en $0: logstash instances: expected: $logstash_instances_total, actual:\\t
-  curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
+  curl -sS http://$consul_bootstrap:8500/v1/health/service/$consul_logstash_service_name?passing | jq '.[] | .Service | .ID' | wc -w
 }
 
 stop_and_remove_all_containers
