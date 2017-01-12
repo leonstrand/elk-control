@@ -18,8 +18,8 @@ loop_threshold_logstash=$loop_threshold
 stop_and_remove_all_containers() {
   work() {
     __host=$1
-    echo ssh $__host \'docker stop $\(docker ps -aq\) \&\& docker rm $\(docker ps -aq\)\'
-    ssh $__host 'docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'
+    echo ssh $__host \''docker stop $(docker ps -aq) && docker rm $(docker ps -aq) && docker rmi $(docker images -f "dangling=true" -q) && docker volume rm $(docker volume ls -qf dangling=true)'\'
+    ssh $__host 'docker stop $(docker ps -aq) && docker rm $(docker ps -aq) && docker rmi $(docker images -f "dangling=true" -q) && docker volume rm $(docker volume ls -qf dangling=true)'
   }
   for host in $hosts; do
     work $host &
