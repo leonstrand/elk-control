@@ -4,8 +4,8 @@
 
 
 hosts='
-10.153.13.35
-10.153.13.36
+sacelk101
+sacelk102
 '
 directory=~/elk
 elasticsearch_nodes_per_host=5
