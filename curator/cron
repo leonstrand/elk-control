@@ -1,0 +1,1 @@
+30 00 * * *	time curator ~/elk-control/curator/curator.forcemerge.actionfile.yml 2>&1 | tee -a ~/elk-control/curator/log/curator.forcemerge.log.$(date '+\%Y-\%m-\%d')
