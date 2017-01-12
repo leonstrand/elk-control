@@ -10,6 +10,7 @@ sacelk102
 directory=~/elk
 elasticsearch_nodes_per_host=5
 logstash_directory_logs=/pai-logs
+logstash_container_name_prefix='logstash-pai'
 loop_threshold=300
 loop_threshold_logstash=$loop_threshold
 
@@ -129,14 +130,13 @@ start_logstash_instances() {
   echo
   host=$(echo $hosts | awk '{print $1}')
   servers=$(ssh $host "find $logstash_directory_logs -maxdepth 1 -mindepth 1 -type d -exec basename {} \;" | sort)
-  container_name_prefix='logstash'
   container_sequence=0
   rest() { shift; echo $*; }
   echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
   echo $0: spinning up logstash instances
   while [ -n "$servers" ]; do
     container_sequence=$(expr $container_sequence + 1)
-    container_name=$container_name_prefix-$container_sequence
+    container_name=$logstash_container_name_prefix-$container_sequence
     for host in $hosts; do
       server=$(echo $servers | awk '{print $1}')
       if [ -n "$server" ]; then
