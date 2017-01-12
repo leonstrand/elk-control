@@ -174,6 +174,8 @@ start_logstash_instances() {
     done
   done
   host=$(echo $hosts | awk '{print $1}')
+  echo
+  echo
   logstash_instances_total=$(ssh $host find /pai-logs -type d -mindepth 1 -maxdepth 1 | wc -l)
   echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
   echo $0: logstash_instances_total: $logstash_instances_total
