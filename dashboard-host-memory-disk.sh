@@ -4,8 +4,8 @@
 
 
 hosts='
-10.153.13.35
-10.153.13.36
+sacelk101
+sacelk102
 '
 
 for host in $hosts; do
