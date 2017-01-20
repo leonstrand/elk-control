@@ -7,7 +7,8 @@ hosts='
 sacelk101
 sacelk102
 '
-directory=~/elk
+user='elk'
+directory=~$user/elk
 elasticsearch_nodes_per_host=5
 logstash_directory_logs=/pai-logs
 logstash_container_name_prefix='logstash-pai'
@@ -19,26 +20,26 @@ loop_threshold_logstash=$loop_threshold
 stop_and_remove_all_containers() {
   work() {
     __host=$1
-      containers="$(ssh $__host docker ps -aq)"
+      containers="$(ssh $user@$__host docker ps -aq)"
       if [ -n "$containers" ]; then
         echo
         echo $0: $__host containers detected\; stopping and removing...
-        echo ssh $__host \''docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'\'
-        ssh $__host 'docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'
+        echo ssh $user@$__host \''docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'\'
+        ssh $user@$__host 'docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'
       fi
-      dangling_images="$(ssh $__host docker images -qf dangling=true)"
+      dangling_images="$(ssh $user@$__host docker images -qf dangling=true)"
       if [ -n "$dangling_images" ]; then
         echo
         echo $0: $__host dangling images detected\; removing...
-        echo ssh $__host \''docker rmi $(docker images -f dangling=true -q)'\'
-        ssh $__host 'docker rmi $(docker images -f dangling=true -q)'
+        echo ssh $user@$__host \''docker rmi $(docker images -f dangling=true -q)'\'
+        ssh $user@$__host 'docker rmi $(docker images -f dangling=true -q)'
       fi
-      dangling_volumes="$(ssh $__host docker volume ls -qf dangling=true)"
+      dangling_volumes="$(ssh $user@$__host docker volume ls -qf dangling=true)"
       if [ -n "$dangling_volumes" ]; then
         echo
         echo $0: $__host dangling volumes detected\; removing...
-        echo ssh $__host \''docker volume rm $(docker volume ls -qf dangling=true)'\'
-        ssh $__host 'docker volume rm $(docker volume ls -qf dangling=true)'
+        echo ssh $user@$__host \''docker volume rm $(docker volume ls -qf dangling=true)'\'
+        ssh $user@$__host 'docker volume rm $(docker volume ls -qf dangling=true)'
       fi
   }
   for host in $hosts; do
@@ -48,14 +49,14 @@ stop_and_remove_all_containers() {
   for host in $hosts; do
     echo
     echo
-    echo ssh $host docker ps -a
-    ssh $host docker ps -a
+    echo ssh $user@$host docker ps -a
+    ssh $user@$host docker ps -a
     echo
-    echo ssh $host docker images -f dangling=true
-    ssh $host docker images -f dangling=true
+    echo ssh $user@$host docker images -f dangling=true
+    ssh $user@$host docker images -f dangling=true
     echo
-    echo ssh $host docker volume ls -f dangling=true
-    ssh $host docker volume ls -f dangling=true
+    echo ssh $user@$host docker volume ls -f dangling=true
+    ssh $user@$host docker volume ls -f dangling=true
   done
 }
 
@@ -67,7 +68,7 @@ start_consul_agents() {
     echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: host: $host
     if [ -z "$consul_bootstrap" ]; then
-      ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh b"
+      ssh $user@$host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh b"
       consul_bootstrap=$host
     else
       echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
@@ -80,19 +81,19 @@ start_consul_agents() {
       echo
       curl --connect-timeout 1 $consul_bootstrap:8500
       echo
-      ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh $consul_bootstrap"
+      ssh $user@$host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh $consul_bootstrap"
     fi
     echo
     echo
     echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: waiting for consul agent to finish starting
-    echo ssh $host docker logs consul-1 \| grep \""\[INFO\] agent: Synced service 'consul'"\"
-    until ssh $host docker logs consul-1 | grep "\[INFO\] agent: Synced service 'consul'"; do
+    echo ssh $user@$host docker logs consul-1 \| grep \""\[INFO\] agent: Synced service 'consul'"\"
+    until ssh $user@$host docker logs consul-1 | grep "\[INFO\] agent: Synced service 'consul'"; do
       echo -n .
       sleep 0.1
     done
     echo
-    ssh $host docker logs consul-1 | grep "\[INFO\] agent: Synced service 'consul'"
+    ssh $user@$host docker logs consul-1 | grep "\[INFO\] agent: Synced service 'consul'"
   done
 }
 
@@ -104,19 +105,19 @@ start_elasticsearch_cluster() {
       echo
       echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: spinning up elasticsearch node on $host
-      ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-elasticsearch.sh"
+      ssh $user@$host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-elasticsearch.sh"
       nodes_up=$(expr $nodes_up + 1)
       echo
       echo
       echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: waiting for elasticsearch node to start
-      echo ssh $host docker logs \$\(ssh $host docker ps -lqf label=elasticsearch\) \| grep started
-      until ssh $host docker logs $(ssh $host docker ps -lqf label=elasticsearch) | grep started; do
+      echo ssh $user@$host docker logs \$\(ssh $user@$host docker ps -lqf label=elasticsearch\) \| grep started
+      until ssh $user@$host docker logs $(ssh $user@$host docker ps -lqf label=elasticsearch) | grep started; do
         echo -n .
         sleep 0.1
       done
       echo
-      ssh $host docker logs $(ssh $host docker ps -lqf label=elasticsearch) | grep started
+      ssh $user@$host docker logs $(ssh $user@$host docker ps -lqf label=elasticsearch) | grep started
       echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
       echo $0: waiting for all elasticsearch nodes to pass
       until [ $(curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n | wc -w) -eq $nodes_up ]; do 
@@ -137,13 +138,13 @@ start_kibana_front_ends() {
     echo
     echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: spinning up kibana front end on $host
-    ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-kibana.sh"
+    ssh $user@$host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-kibana.sh"
     echo
     echo
     echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
     echo $0: waiting for kibana to finish starting
-    echo ssh $host docker logs kibana-1 \| grep \''Server running'\'
-    until ssh $host docker logs kibana-1 | grep 'Server running'; do
+    echo ssh $user@$host docker logs kibana-1 \| grep \''Server running'\'
+    until ssh $user@$host docker logs kibana-1 | grep 'Server running'; do
       echo -n .
       sleep 0.1
     done
@@ -155,7 +156,7 @@ start_logstash_instances() {
   echo
   echo
   host=$(echo $hosts | awk '{print $1}')
-  servers=$(ssh $host "find $logstash_directory_logs -maxdepth 1 -mindepth 1 -type d -exec basename {} \;" | sort)
+  servers=$(ssh $user@$host "find $logstash_directory_logs -maxdepth 1 -mindepth 1 -type d -exec basename {} \;" | sort)
   container_sequence=0
   rest() { shift; echo $*; }
   echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
@@ -167,8 +168,8 @@ start_logstash_instances() {
       server=$(echo $servers | awk '{print $1}')
       if [ -n "$server" ]; then
         echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
-        echo $0: debug: command: ssh $host \""PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-logstash-parallel.sh $container_name $server"\"
-        ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-logstash-parallel.sh $container_name $server"
+        echo $0: debug: command: ssh $user@$host \""PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-logstash-parallel.sh $container_name $server"\"
+        ssh $user@$host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-logstash-parallel.sh $container_name $server"
         servers=$(rest $servers)
       fi
     done
@@ -176,7 +177,7 @@ start_logstash_instances() {
   host=$(echo $hosts | awk '{print $1}')
   echo
   echo
-  logstash_instances_total=$(ssh $host find /pai-logs -type d -mindepth 1 -maxdepth 1 | wc -l)
+  logstash_instances_total=$(ssh $user@$host find /pai-logs -type d -mindepth 1 -maxdepth 1 | wc -l)
   echo -n $(date '+%Y-%m-%d %H:%M:%S.%N')\ 
   echo $0: logstash_instances_total: $logstash_instances_total
   logstash_instances=0
