@@ -3,15 +3,12 @@
 # leonstrand@gmail.com
 
 
-hosts='
-sacelk101
-sacelk102
-'
+hosts=$ELK_HOSTS
 user='elk'
 directory=~$user/elk
 elasticsearch_nodes_per_host=5
-logstash_directory_logs=/pai-logs
-logstash_container_name_prefix='logstash-pai'
+logstash_directory_logs=$LOGSTASH_DIRECTORY_LOGS
+logstash_container_name_prefix=$LOGSTASH_CONTAINER_NAME_PREFIX
 consul_logstash_service_name=$logstash_container_name_prefix
 loop_threshold=300
 loop_threshold_logstash=$loop_threshold
