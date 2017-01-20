@@ -3,6 +3,7 @@
 # leonstrand@gmail.com
 
 
+# deprecated in favor of start-parallel
 hosts='
 10.153.13.35
 10.153.13.36
