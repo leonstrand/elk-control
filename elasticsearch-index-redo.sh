@@ -11,11 +11,8 @@ if [ -z "$index" ]; then
   exit 1
 fi
 
-consul_agents='
-10.153.13.35
-10.153.13.36
-'
-consul_agent_port=8500
+consul_agents=$CONSUL_AGENTS
+consul_agent_port=$CONSUL_PORT
 
 
 # check for consul agent, elasticsearch ip address and port, and successful connection to elasticsearch before proceeding
