@@ -3,10 +3,7 @@
 # leon.strand@medeanalytics.com
 
 
-hosts='
-sacelk101
-sacelk102
-'
+hosts=$ELK_HOSTS
 
 for host in $hosts; do
   echo
