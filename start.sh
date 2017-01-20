@@ -4,10 +4,8 @@
 
 
 # deprecated in favor of start-parallel
-hosts='
-10.153.13.35
-10.153.13.36
-'
+hosts=$ELK_HOSTS
+consul_port=$CONSUL_PORT
 directory=~/elk
 elasticsearch_nodes_per_host=5
 
@@ -40,14 +38,14 @@ start_consul_agents() {
       ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh b"
       consul_bootstrap=$host
     else
-      echo $0: waiting for response from bootstrap consul agent at $consul_bootstrap:8500
-      echo curl --connect-timeout 1 $consul_bootstrap:8500
-      until curl --connect-timeout 1 $consul_bootstrap:8500 1>/dev/null 2>&1; do
+      echo $0: waiting for response from bootstrap consul agent at $consul_bootstrap:$consul_port
+      echo curl --connect-timeout 1 $consul_bootstrap:$consul_port
+      until curl --connect-timeout 1 $consul_bootstrap:$consul_port 1>/dev/null 2>&1; do
         echo -n .
         sleep 0.1
       done
       echo
-      curl --connect-timeout 1 $consul_bootstrap:8500
+      curl --connect-timeout 1 $consul_bootstrap:$consul_port
       echo
       ssh $host "PATH=\$PATH:/usr/sbin; cd $directory && time ./spinup-consul.sh $consul_bootstrap"
     fi
@@ -84,13 +82,13 @@ start_elasticsearch_cluster() {
       echo
       ssh $host docker logs $(ssh $host docker ps -lqf label=elasticsearch) | grep started
       echo $0: waiting for all elasticsearch nodes to pass
-      until [ $(curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n | wc -w) -eq $nodes_up ]; do 
+      until [ $(curl -sS $consul_bootstrap:$consul_port/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n | wc -w) -eq $nodes_up ]; do 
         echo -n .
         sleep 0.1
       done
       echo
-      echo curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing \| jq -jr \''.[] | .Service | .Address + ":" + "\(.Port)" + ","'\' \| sed \''s/,$//'\' \| tr , \\\\n
-      curl -sS $consul_bootstrap:8500/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n
+      echo curl -sS $consul_bootstrap:$consul_port/v1/health/service/elasticsearch-transport?passing \| jq -jr \''.[] | .Service | .Address + ":" + "\(.Port)" + ","'\' \| sed \''s/,$//'\' \| tr , \\\\n
+      curl -sS $consul_bootstrap:$consul_port/v1/health/service/elasticsearch-transport?passing | jq -jr '.[] | .Service | .Address + ":" + "\(.Port)" + ","' | sed 's/,$//' | tr , \\n
       echo
     done
   done
@@ -132,19 +130,19 @@ start_logstash_instances() {
       echo
       echo
       echo $0: live logstash instances:
-      curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | tr -d \" | sort
+      curl -sS http://$consul_bootstrap:$consul_port/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | tr -d \" | sort
       echo $0: expected live logstash instance count: $logstash_instances
       echo -n $0: actual live logstash instance count:\ 
-      curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
+      curl -sS http://$consul_bootstrap:$consul_port/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
       echo $0: waiting for actual to equal expected
-      echo curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing \| jq \''.[] | .Service | .ID'\' \| wc -w
-      until [ $(curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w) -eq $logstash_instances ]; do
+      echo curl -sS http://$consul_bootstrap:$consul_port/v1/health/service/logstash?passing \| jq \''.[] | .Service | .ID'\' \| wc -w
+      until [ $(curl -sS http://$consul_bootstrap:$consul_port/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w) -eq $logstash_instances ]; do
         echo -n .
         sleep 0.1
       done
       echo
       echo -n $0: actual live logstash instance count:\ 
-      curl -sS http://$consul_bootstrap:8500/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
+      curl -sS http://$consul_bootstrap:$consul_port/v1/health/service/logstash?passing | jq '.[] | .Service | .ID' | wc -w
     done
   done
 }
