@@ -3,11 +3,8 @@
 # leon.strand@medeanalytics.com
 
 
-consul_agents='
-sacelk101
-sacelk102
-'
-consul_port=8500
+consul_agents=$CONSUL_AGENTS
+consul_port=$CONSUL_PORT
 
 # select first responsive consul agent
 for consul_agent in $consul_agents; do
