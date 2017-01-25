@@ -13,6 +13,9 @@ export CONSUL_PORT=8500
 # elk hosts same as consul agents
 export ELK_HOSTS=$CONSUL_AGENTS
 
+# user running elk on elk hosts
+export ELK_USER='elk'
+
 # directory of mounted logs from target servers
 export LOGSTASH_DIRECTORY_LOGS=/example_directory
 # unique name to differentiate logstash containers between purposes
