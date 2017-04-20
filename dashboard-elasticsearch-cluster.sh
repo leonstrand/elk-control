@@ -49,26 +49,15 @@ eval $command
 
 # output elasticsearch nodes and roles
 echo
-#echo $0: elasticsearch cluster nodes
 echo elasticsearch cluster nodes
-echo -e 'ip address\tport\trole'
-master_node=$(curl -sS $address:$port/_cluster/state/master_node?pretty | grep master_node | awk '{print $NF}' | tr -d \")
+echo -e 'ip address\tport\troles'
+master_node="$(curl -sS $address:$port/_cluster/state/master_node?pretty | jq -r '.master_node')"
 elasticsearch_nodes=$(curl -sS $address:$port/_nodes/_all/http_address?pretty | grep -B1 '"name"' | egrep -v '"name"|^--' | awk '{print $1}' | tr -d \")
 for elasticsearch_node in $elasticsearch_nodes; do
-  http_address=$(curl -sS $address:$port/_nodes/$elasticsearch_node/http_address?pretty | grep '"http_address"' | awk '{print $NF}' | tr -d '",')
-  node_ip=$(echo $http_address | cut -d: -f1)
-  node_port=$(echo $http_address | cut -d: -f2)
-  role=
-  if [ "$master_node" == "$elasticsearch_node" ]; then
-    role='master, data'
-  else
-    if curl -sS $address:$port/_nodes/$elasticsearch_node/http_address?pretty | grep -A2 '"attributes"' | grep -v attributes | grep -q '"data" : "false"'; then
-      if curl -sS $address:$port/_nodes/$elasticsearch_node/http_address?pretty | grep -A2 '"attributes"' | grep -v attributes | grep -q '"master" : "false"'; then
-        role='loadbalancer'
-      fi
-    else
-      role='data'
-    fi
-  fi
-  echo -e $node_ip'\t'$node_port'\t'$role
+  node_ip="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".settings.network.publish_host')"
+  node_port="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".settings.http.publish_port')"
+  roles="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".roles[]')"
+  roles="$(echo $roles | sed 's/\(master\)/\1-eligible/')"
+  [ "$elasticsearch_node" == "$master_node" ] && roles='master-actual '"$roles"
+  echo -e $node_ip'\t'$node_port'\t'$roles
 done | sort -V
