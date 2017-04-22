@@ -57,7 +57,6 @@ for elasticsearch_node in $elasticsearch_nodes; do
   node_ip="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".settings.network.publish_host')"
   node_port="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".settings.http.publish_port')"
   roles="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".roles[]')"
-  roles="$(echo $roles | sed 's/\(master\)/\1-eligible/')"
-  [ "$elasticsearch_node" == "$master_node" ] && roles='master-actual '"$roles"
+  [ "$elasticsearch_node" != "$master_node" ] && roles="$(echo $roles | sed 's/\(master\)/\1-eligible/')"
   echo -e $node_ip'\t'$node_port'\t'$roles
 done | sort -V
