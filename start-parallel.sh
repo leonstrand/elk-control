@@ -38,6 +38,9 @@ stop_and_remove_all_containers() {
         echo ssh $user@$__host \''docker volume rm $(docker volume ls -qf dangling=true)'\'
         ssh $user@$__host 'docker volume rm $(docker volume ls -qf dangling=true)'
       fi
+      echo
+      echo ssh root@$__host rm -frv /elk/elasticsearch/*
+      ssh root@$__host rm -frv /elk/elasticsearch/*
   }
   for host in $hosts; do
     work $host &
@@ -54,6 +57,9 @@ stop_and_remove_all_containers() {
     echo
     echo ssh $user@$host docker volume ls -f dangling=true
     ssh $user@$host docker volume ls -f dangling=true
+    echo
+    echo ssh $user@$host ls -alh /elk/elasticsearch
+    ssh $user@$host ls -alh /elk/elasticsearch
   done
 }
 
