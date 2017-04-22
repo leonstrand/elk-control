@@ -50,7 +50,7 @@ eval $command
 # output elasticsearch nodes and roles
 echo
 echo elasticsearch cluster nodes
-echo -e 'ip address\tport\troles'
+echo -e 'ip address\tport\tid\t\t\troles'
 master_node="$(curl -sS $address:$port/_cluster/state/master_node?pretty | jq -r '.master_node')"
 elasticsearch_nodes=$(curl -sS $address:$port/_nodes/_all/http_address?pretty | grep -B1 '"name"' | egrep -v '"name"|^--' | awk '{print $1}' | tr -d \")
 for elasticsearch_node in $elasticsearch_nodes; do
@@ -58,5 +58,5 @@ for elasticsearch_node in $elasticsearch_nodes; do
   node_port="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".settings.http.publish_port')"
   roles="$(curl -sS $address:$port/_nodes/?pretty | jq -r '.nodes."'$elasticsearch_node'".roles[]')"
   [ "$elasticsearch_node" != "$master_node" ] && roles="$(echo $roles | sed 's/\(master\)/\1-eligible/')"
-  echo -e $node_ip'\t'$node_port'\t'$roles
+  echo -e $node_ip'\t'$node_port'\t'$elasticsearch_node'\t'$roles
 done | sort -V
