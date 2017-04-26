@@ -12,8 +12,8 @@ stop_and_remove_all_containers() {
       if [ -n "$containers" ]; then
         echo
         echo $0: $__host containers detected\; stopping and removing...
-        echo ssh $__host \''docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'\'
-        ssh $__host 'docker stop $(docker ps -aq) && docker rm $(docker ps -aq)'
+        echo ssh $__host \''docker stop $(docker ps -aq) && docker rm -v $(docker ps -aq)'\'
+        ssh $__host 'docker stop $(docker ps -aq) && docker rm -v $(docker ps -aq)'
       fi
       dangling_images="$(ssh $__host docker images -qf dangling=true)"
       if [ -n "$dangling_images" ]; then
