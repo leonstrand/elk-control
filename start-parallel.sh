@@ -41,6 +41,9 @@ stop_and_remove_all_containers() {
       echo
       echo ssh root@$__host rm -frv /elk/elasticsearch/*
       ssh root@$__host rm -frv /elk/elasticsearch/*
+      echo
+      echo ssh root@$__host rm -frv /elk/logstash/*
+      ssh root@$__host rm -frv /elk/logstash/*
   }
   for host in $hosts; do
     work $host &
