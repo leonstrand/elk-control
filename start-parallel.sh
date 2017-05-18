@@ -6,7 +6,7 @@
 hosts=$ELK_HOSTS
 user='elk'
 directory=~$user/elk
-elasticsearch_nodes_per_host=5
+elasticsearch_nodes_per_host=10
 logstash_directory_logs=$LOGSTASH_DIRECTORY_LOGS
 logstash_container_name_prefix=$LOGSTASH_CONTAINER_NAME_PREFIX
 consul_logstash_service_name=$logstash_container_name_prefix
@@ -41,6 +41,9 @@ stop_and_remove_all_containers() {
       echo
       echo ssh root@$__host rm -frv /elk/elasticsearch/*
       ssh root@$__host rm -frv /elk/elasticsearch/*
+      echo
+      echo ssh root@$__host rm -frv /elk/logstash/*
+      ssh root@$__host rm -frv /elk/logstash/*
   }
   for host in $hosts; do
     work $host &
