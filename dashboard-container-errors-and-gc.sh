@@ -11,7 +11,7 @@ work() {
       if [ -n "$lines" ]; then
         echo
         docker ps -af id=$__container --format '\''{{.Names}}'\''
-        echo "$lines"
+        echo "$lines" | tee >(wc -l)
         2>/dev/null docker exec $__container date
       fi
     }
