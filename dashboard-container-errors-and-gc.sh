@@ -1,9 +1,10 @@
 #!/bin/bash
 
-for h in $ELK_HOSTS; do
+work() {
+  __host=$1
   echo
-  echo $h
-  ssh $ELK_USER@$h '
+  echo $__host
+  ssh $ELK_USER@$__host '
     work() {
       __container=$1
       lines="$(2>/dev/null docker logs $__container | egrep '\''ERROR|gc'\'')"
@@ -17,4 +18,6 @@ for h in $ELK_HOSTS; do
     export -f work
     parallel work ::: $(docker ps -aq)
   '
-done | tee >(wc -l)
+}
+export -f work
+parallel work ::: $ELK_HOSTS | tee >(wc -l)
