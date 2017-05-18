@@ -4,14 +4,17 @@ for h in $ELK_HOSTS; do
   echo
   echo $h
   ssh $ELK_USER@$h '
-    for i in $(docker ps -aq); do
-      lines="$(2>/dev/null docker logs $i | egrep '\''ERROR|gc'\'')"
+    work() {
+      __container=$1
+      lines="$(2>/dev/null docker logs $__container | egrep '\''ERROR|gc'\'')"
       if [ -n "$lines" ]; then
         echo
-        docker ps -af id=$i --format '\''{{.Names}}'\''
+        docker ps -af id=$__container --format '\''{{.Names}}'\''
         echo "$lines"
-        2>/dev/null docker exec $i date
+        2>/dev/null docker exec $__container date
       fi
-    done | tee >(wc -l)
+    }
+    export -f work
+    parallel work ::: $(docker ps -aq)
   '
-done
+done | tee >(wc -l)
